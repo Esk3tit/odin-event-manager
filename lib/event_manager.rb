@@ -1,6 +1,7 @@
 require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
+require 'time'
 
 def clean_zipcode(zipcode)
   zipcode.to_s.rjust(5, '0')[0..4]
@@ -16,6 +17,16 @@ def clean_phone_number(number)
   else
     standard_phone_num[0..9]
   end
+end
+
+def find_peak_registration_hours(registration_date_list)
+  # Get the hour from the regdate column. We don't care about the actual date
+  # count each hour and then list out in sorted desc order for most common hours of reg
+  # use 24 hour format since we want to differentiate between AM/PM but print in 12 hr
+  # format for intuitive reading
+  hours_list = registration_date_list.map { |regdate| Time.strptime(regdate, "%m/%d/%y %k:%M").hour }
+  hour_count = hours_list.each_with_object(Hash.new(0)) { |hour,counter| counter[hour] += 1 }
+  hour_count.sort_by(&:last).reverse
 end
 
 def legislators_by_zipcode(zip)
@@ -54,15 +65,22 @@ contents = CSV.open(
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
 
+regdate_list = []
+
 contents.each do |row|
   id = row[0]
   name = row[:first_name]
   zipcode = clean_zipcode(row[:zipcode])
   legislators = legislators_by_zipcode(zipcode)
   phone_num = clean_phone_number(row[:homephone])
+  regdate_list << row[:regdate]
   puts "#{phone_num}"
 
   form_letter = erb_template.result(binding)
 
   save_thank_you_letter(id, form_letter)
 end
+
+puts "Most common registration times by 24 hour format hour and occurences in subarray"
+# Format function for time here
+puts find_peak_registration_hours(regdate_list).inspect
