@@ -29,6 +29,11 @@ def find_peak_registration_hours(registration_date_list)
   hour_count.sort_by(&:last).reverse
 end
 
+def print_peak_registration_hours(sorted_hours_freq_list)
+  puts "Here are the most frequent registration hours and their counts:"
+  sorted_hours_freq_list.each { |hour_freq| puts "Hour: #{Time.strptime(hour_freq[0].to_s, "%k").strftime("%I %p")} | Frequency: #{hour_freq[1]}" }
+end
+
 def legislators_by_zipcode(zip)
   civic_info = Google::Apis::CivicinfoV2::CivicInfoService.new
   civic_info.key = File.read('secret.key').strip
@@ -81,6 +86,5 @@ contents.each do |row|
   save_thank_you_letter(id, form_letter)
 end
 
-puts "Most common registration times by 24 hour format hour and occurences in subarray"
 # Format function for time here
-puts find_peak_registration_hours(regdate_list).inspect
+print_peak_registration_hours(find_peak_registration_hours(regdate_list))
