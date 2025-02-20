@@ -2,6 +2,7 @@ require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
 require 'time'
+require 'date'
 
 def clean_zipcode(zipcode)
   zipcode.to_s.rjust(5, '0')[0..4]
@@ -32,6 +33,17 @@ end
 def print_peak_registration_hours(sorted_hours_freq_list)
   puts "Here are the most frequent registration hours and their counts:"
   sorted_hours_freq_list.each { |hour_freq| puts "Hour: #{Time.strptime(hour_freq[0].to_s, "%k").strftime("%I %p")} | Frequency: #{hour_freq[1]}" }
+end
+
+def find_peak_registration_days_of_week(registration_date_list)
+  days_of_week_list = registration_date_list.map { |regdate| Date.strptime(regdate, "%m/%d/%y %k:%M").wday }
+  days_of_week_count = days_of_week_list.each_with_object(Hash.new(0)) { |day,counter| counter[day] += 1 }
+  days_of_week_count.sort_by(&:last).reverse
+end
+
+def print_peak_registration_days_of_week(sorted_days_freq_list)
+  puts "Here are the most frequent registration days of the week and their counts:"
+  sorted_days_freq_list.each { |day_freq| puts "Day: #{Date::DAYNAMES[day_freq[0]]} | Frequency: #{day_freq[1]}" }
 end
 
 def legislators_by_zipcode(zip)
@@ -86,5 +98,5 @@ contents.each do |row|
   save_thank_you_letter(id, form_letter)
 end
 
-# Format function for time here
 print_peak_registration_hours(find_peak_registration_hours(regdate_list))
+print_peak_registration_days_of_week(find_peak_registration_days_of_week(regdate_list))
